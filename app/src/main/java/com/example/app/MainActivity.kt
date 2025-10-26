@@ -1,94 +1,150 @@
 package com.example.app
 
-import android.os.Bundle
+import android.content.Intent
+import android.content.SharedPreferences
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.ComponentActivity
+import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.app.ui.theme.AppTheme
-
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.res.imageResource
 
 class MainActivity : ComponentActivity() {
+    private lateinit var sharedPreferences: SharedPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        sharedPreferences = getSharedPreferences("game_prefs", MODE_PRIVATE)
         setContent {
             AppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MainScreen(
+                    sharedPreferences = sharedPreferences
+                )
             }
         }
     }
+    override fun onResume() {
+        super.onResume()
+    }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Button(onClick = {}, shape = RoundedCornerShape(15.dp),
-            modifier=Modifier.align(Alignment.Center)) {
-            Text(
-                text = "Играть",
-                modifier = modifier
+fun MainScreen(sharedPreferences: SharedPreferences) {
+    val context = LocalContext.current
+    var rating by remember {
+        mutableIntStateOf(sharedPreferences.getInt("user_rating", 0))
+    }
+
+    LaunchedEffect(Unit) {
+        rating = sharedPreferences.getInt("user_rating", 0)
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Крестики-Нолики",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 60.dp)
+        )
+
+        Button(
+            onClick = {
+                val intent = Intent(context, HowToPlayActivity::class.java)
+                context.startActivity(intent)
+            },
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(vertical = 8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
             )
-        }
-        Button(onClick = {expanded = true}, shape = RoundedCornerShape(15.dp),
-            modifier=Modifier.align(Alignment.BottomStart).padding(bottom = 10.dp)) {
-            Text(
-                text = "Правила игры",
-                modifier = modifier
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
         ) {
-            DropdownMenuItem(
-                onClick = { },
-                text = {Text("Игра происходит на поле 3х3." +
-                        "У каждого игрока есть по 5 фигур разного размера. " +
-                        "Игрок ставит одну из фигур на поле. " +
-                        "Противник может либо поставить любую свою фигуру в свободное место, либо накрыть вашу уже поставленную своей фигурой большего размера.")}
-            )
-            Image(
-                bitmap = ImageBitmap.imageResource(R.drawable.img),
-                contentDescription = "Зимний лес",
-                alignment = Alignment.Center
+            Text(
+                text = "Как играть",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
             )
         }
+        Spacer(modifier = Modifier.width(24.dp))
+        Button(
+            onClick = {
+                val intent = Intent(context, GameActivity::class.java)
+                context.startActivity(intent)
+            },
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(vertical = 8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Text(
+                text = "Играть против бота",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        // Блок с рейтингом
+        Card(
+            modifier = Modifier.fillMaxWidth(0.8f).padding(horizontal = 16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Текущий рейтинг",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+
+                Text(
+                    text = rating.toString(),
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Text(
+                    text = "очков",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // Подсказка внизу экрана
+        Text(
+            text = "Победа: +30 очков • Поражение: -25 очков",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 32.dp)
+        )
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    AppTheme {
-        Greeting("Android")
-    }
+fun AppTheme(content: @Composable () -> Unit) {
+    MaterialTheme(
+        content = content
+    )
 }
