@@ -1,6 +1,5 @@
 package com.example.app
 
-import android.content.Context
 import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import android.os.Bundle
@@ -15,6 +14,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.ui.unit.times
 
 class GameActivity : ComponentActivity() {
 
@@ -127,7 +138,8 @@ fun GameScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Статус игры
+        Spacer(modifier = Modifier.height(200.dp))
+
         Text(
             text = gameStatus,
             fontSize = 20.sp,
@@ -135,8 +147,8 @@ fun GameScreen(
             modifier = Modifier.padding(bottom = 20.dp)
         )
 
-        // Игровое поле 3x3
-        GameBoard(
+        // Используем новый компонент с изображением поля
+        ImageGameBoard(
             board = gameState.board,
             onCellClick = { row, col ->
                 if (!showSymbolSelection &&
@@ -144,13 +156,11 @@ fun GameScreen(
                     gameState.currentPlayer == gameState.userSymbol &&
                     gameState.board[row][col] == GameBot.EMPTY
                 ) {
-                    // Ход пользователя
                     gameState = gameState.makeMove(row, col, gameState.userSymbol)
                     updateGameStatus(gameState, gameBot) { status ->
                         gameStatus = status
                     }
 
-                    // Обновляем рейтинг если игра окончена
                     if (gameState.winner != GameBot.EMPTY || gameState.isBoardFull()) {
                         updateRating(sharedPreferences, gameState.winner, gameState.userSymbol)
                     }
@@ -158,7 +168,7 @@ fun GameScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(150.dp))
 
         // Кнопка новой игры
         Button(
@@ -180,22 +190,68 @@ fun GameScreen(
 }
 
 @Composable
-fun GameBoard(
+fun ImageGameBoard(
     board: Array<IntArray>,
     onCellClick: (Int, Int) -> Unit
 ) {
-    Column(
-        modifier = Modifier.padding(8.dp)
+    // Размеры изображения поля
+    val imageSize = 300.dp
+
+    Box(
+        modifier = Modifier
+            .size(imageSize)
     ) {
-        for (i in 0..2) {
-            Row {
-                for (j in 0..2) {
-                    GameCell(
-                        cellState = board[i][j],
-                        onClick = { onCellClick(i, j) },
+        // Изображение игрового поля 3x3
+        Image(
+            painter = painterResource(id = R.drawable.board), // Ваше изображение поля
+            contentDescription = "Игровое поле",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit
+        )
+
+        // Невидимые кнопки поверх каждой клетки поля
+        GameBoardOverlay(
+            imageSize = imageSize,
+            onCellClick = onCellClick
+        )
+
+        // Отображаем символы поверх изображения
+        BoardSymbolsOverlay(
+            board = board,
+            imageSize = imageSize
+        )
+    }
+}
+
+// Невидимая сетка для обработки нажатий
+@Composable
+fun GameBoardOverlay(
+    imageSize: Dp,
+    onCellClick: (Int, Int) -> Unit
+) {
+    // Предполагаем, что поле симметрично и клетки одинакового размера
+    val cellSize = imageSize / 3
+
+    Column(
+        modifier = Modifier
+            .size(imageSize)
+    ) {
+        // 3 строки
+        for (row in 0..2) {
+            Row(
+                modifier = Modifier
+                    .height(cellSize)
+                    .fillMaxWidth()
+            ) {
+                // 3 колонки в каждой строке
+                for (col in 0..2) {
+                    Box(
                         modifier = Modifier
-                            .size(80.dp)
-                            .padding(4.dp)
+                            .size(cellSize)
+                            .clickable {
+                                onCellClick(row, col)
+                            }
+                            .background(Color.Transparent) // Полностью прозрачная
                     )
                 }
             }
@@ -203,49 +259,40 @@ fun GameBoard(
     }
 }
 
+// Отображение символов поверх изображения поля
 @Composable
-fun GameCell(
-    cellState: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+fun BoardSymbolsOverlay(
+    board: Array<IntArray>,
+    imageSize: Dp
 ) {
-    val cellColor = when (cellState) {
-        GameBot.SYMBOL_X -> MaterialTheme.colorScheme.primary
-        GameBot.SYMBOL_O -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
+    val cellSize = imageSize / 3
 
-    val cellText = when (cellState) {
-        GameBot.SYMBOL_X -> "X"
-        GameBot.SYMBOL_O -> "O"
-        else -> ""
-    }
-
-    val textColor = when (cellState) {
-        GameBot.SYMBOL_X -> MaterialTheme.colorScheme.onPrimary
-        GameBot.SYMBOL_O -> MaterialTheme.colorScheme.onSecondary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = cellColor)
+    Box(
+        modifier = Modifier.size(imageSize)
     ) {
-        Box(
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = cellText,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = textColor
-            )
+        for (row in 0..2) {
+            for (col in 0..2) {
+                val symbol = board[row][col]
+                if (symbol != GameBot.EMPTY) {
+                    val offsetX = col * cellSize
+                    val offsetY = row * cellSize
+
+                    Box(
+                        modifier = Modifier.offset(x = offsetX, y = offsetY).size(cellSize),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (symbol == GameBot.SYMBOL_X) "X" else "O",
+                            fontSize = 48.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (symbol == GameBot.SYMBOL_X) Color.Blue else Color.Red
+                        )
+                    }
+                }
+            }
         }
     }
 }
-
 // Функция для обновления статуса игры
 private fun updateGameStatus(
     gameState: GameState,

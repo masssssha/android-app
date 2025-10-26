@@ -51,6 +51,7 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Spacer(modifier = Modifier.height(200.dp))
         Text(
             text = "Крестики-Нолики",
             fontSize = 32.sp,
@@ -60,14 +61,14 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
             modifier = Modifier.padding(bottom = 60.dp)
         )
 
+        Spacer(modifier = Modifier.width(50.dp))
+
         Button(
             onClick = {
                 val intent = Intent(context, HowToPlayActivity::class.java)
                 context.startActivity(intent)
             },
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .padding(vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 8.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
             )
@@ -77,8 +78,11 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
             )
+
         }
-        Spacer(modifier = Modifier.width(24.dp))
+
+        Spacer(modifier = Modifier.width(50.dp))
+
         Button(
             onClick = {
                 val intent = Intent(context, GameActivity::class.java)
@@ -98,16 +102,18 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
             )
         }
 
+        // Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(150.dp))
         // Блок с рейтингом
         Card(
-            modifier = Modifier.fillMaxWidth(0.8f).padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth(0.7f).padding(horizontal = 16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
