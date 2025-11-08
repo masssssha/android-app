@@ -15,6 +15,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
 
 class MainActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -46,111 +48,131 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
         rating = sharedPreferences.getInt("user_rating", 0)
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF121212))
     ) {
-        Spacer(modifier = Modifier.height(200.dp))
-        Text(
-            text = "Крестики-Нолики",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 60.dp)
-        )
-
-        Spacer(modifier = Modifier.width(50.dp))
-
-        Button(
-            onClick = {
-                val intent = Intent(context, HowToPlayActivity::class.java)
-                context.startActivity(intent)
-            },
-            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            Spacer(modifier = Modifier.height(200.dp))
             Text(
-                text = "Как играть",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
+                text = "Крестики-Нолики",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFFFFF0),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 60.dp)
             )
 
-        }
+            Spacer(modifier = Modifier.width(50.dp))
 
-        Spacer(modifier = Modifier.width(50.dp))
-
-        Button(
-            onClick = {
-                val intent = Intent(context, GameActivity::class.java)
-                context.startActivity(intent)
-            },
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .padding(vertical = 8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary
-            )
-        ) {
-            Text(
-                text = "Играть против бота",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-
-        // Spacer(modifier = Modifier.weight(1f))
-        Spacer(modifier = Modifier.height(150.dp))
-        // Блок с рейтингом
-        Card(
-            modifier = Modifier.fillMaxWidth(0.7f).padding(horizontal = 16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Button(
+                onClick = {
+                    val intent = Intent(context, HowToPlayActivity::class.java)
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF888888)
+                )
             ) {
                 Text(
-                    text = "Текущий рейтинг",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    text = "Как играть",
+                    fontSize = 18.sp,
+                    color = Color(0xFFFFFFF0),
+                    fontWeight = FontWeight.Medium
                 )
 
-                Text(
-                    text = rating.toString(),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            }
 
+            Spacer(modifier = Modifier.width(50.dp))
+
+            Button(
+                onClick = {
+                    val intent = Intent(context, GameActivity::class.java)
+                    context.startActivity(intent)
+                },
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .padding(vertical = 8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6CACE4)
+                )
+            ) {
                 Text(
-                    text = "очков",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Играть против бота",
+                    fontSize = 18.sp,
+                    color = Color(0xFFFFFFF0),
+                    fontWeight = FontWeight.Medium
                 )
             }
-        }
 
-        // Подсказка внизу экрана
-        Text(
-            text = "Победа: +30 очков • Поражение: -25 очков",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 32.dp)
-        )
+            // Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(150.dp))
+            // Блок с рейтингом
+            Card(
+                modifier = Modifier.fillMaxWidth(0.7f).padding(horizontal = 16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Текущий рейтинг",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+
+                    Text(
+                        text = rating.toString(),
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF6CACE4)
+                    )
+
+                    Text(
+                        text = "очков",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Подсказка внизу экрана
+            Text(
+                text = "Победа: +30 очков • Поражение: -25 очков",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 32.dp)
+            )
+        }
     }
 }
 
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
+    val darkColorScheme = darkColorScheme(
+        primary = Color(0xFFBB86FC),
+        secondary = Color(0xFF03DAC6),
+        tertiary = Color(0xFFCF6679),
+        background = Color.Black,
+        surface = Color(0xFF121212),
+        onPrimary = Color.Black,
+        onSecondary = Color.Black,
+        onBackground = Color.Black,
+        onSurface = Color.White
+    )
     MaterialTheme(
+        colorScheme = darkColorScheme,
         content = content
     )
 }
