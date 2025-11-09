@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.times
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import kotlin.math.max
+import android.content.Intent
 
 class GameActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -51,7 +51,12 @@ class GameActivity : ComponentActivity() {
             GameTheme {
                 GameScreen(
                     sharedPreferences = sharedPreferences,
-                    onBackClick = { finish() }
+                    onBackClick = {
+                        val intent = Intent(this@GameActivity, MainActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        startActivity(intent)
+                        finish()
+                    }
                 )
             }
         }
@@ -74,6 +79,25 @@ fun GameScreen(
     var showFirstMoveDialog by remember { mutableStateOf(true) }
     var showGameOverDialog by remember { mutableStateOf(false) }
     var gameResult by remember { mutableStateOf("") } // "win", "lose", "draw"
+    var userRating by remember {
+        mutableStateOf(sharedPreferences.getInt("user_rating", 0))
+    }
+
+    fun updateRating(winner: Int) {
+        val currentRating = sharedPreferences.getInt("user_rating", 0)
+        val newRating = when (winner) {
+            1 -> currentRating + 30
+            2 -> currentRating - 25
+            else -> currentRating
+        }
+        println("🔄 UPDATE RATING: current=$currentRating, winner=$winner, new=$newRating")
+        sharedPreferences.edit().putInt("user_rating", newRating).commit()
+
+        val savedRating = sharedPreferences.getInt("user_rating", -1)
+        println("💾 SAVED RATING: $savedRating")
+
+        userRating = newRating
+    }
 
     LaunchedEffect(gameState.board) {
         val winner = gameState.checkWinnerByCircles(circleItems)
@@ -86,7 +110,7 @@ fun GameScreen(
                 else -> "draw"
             }
             showGameOverDialog = true
-            updateRating(sharedPreferences, winner)
+            updateRating(winner)
         }
     }
 
@@ -129,7 +153,7 @@ fun GameScreen(
 
     // Обработка хода бота
     LaunchedEffect(key1 = gameState.currentPlayer, key2 = gameState.board) {
-        val shouldBotMove = gameState.winner == GameBot.EMPTY &&
+        val shouldBotMove = gameState.checkWinnerByCircles(circleItems) == GameBot.EMPTY &&
                 !gameState.isBoardFull() &&
                 gameState.currentPlayer == 2 &&
                 !showFirstMoveDialog
@@ -161,9 +185,9 @@ fun GameScreen(
                         }
                         updateGameStatus(gameState, circleItems) { status -> gameStatus = status }
 
-                        if (gameState.winner != GameBot.EMPTY || gameState.isBoardFull()) {
+                        val winnerAfterBotMove = gameState.checkWinnerByCircles(circleItems)
+                        if (winnerAfterBotMove != GameBot.EMPTY || gameState.isBoardFull()) {
                             showGameOverDialog = true
-                            updateRating(sharedPreferences, gameState.winner)
                         }
                     }
                 }
@@ -246,7 +270,6 @@ fun GameScreen(
             dismissButton = {
                 TextButton(
                     onClick = {
-                        // Выход в главное меню
                         onBackClick()
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -266,7 +289,7 @@ fun GameScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (gameState.winner == GameBot.EMPTY && !gameState.isBoardFull()) {
+                            if (gameState.checkWinnerByCircles(circleItems) == GameBot.EMPTY && !gameState.isBoardFull()) {
                                 showExitDialog = true
                             } else {
                                 onBackClick()
@@ -307,7 +330,7 @@ fun GameScreen(
                     circleItems = circleItems,
                     selectedCell = selectedCell,
                     onCellClick = { row, col ->
-                        if (gameState.winner == GameBot.EMPTY &&
+                        if (gameState.checkWinnerByCircles(circleItems) == GameBot.EMPTY &&
                             gameState.currentPlayer == 1
                         ) {
                             selectedCell = Pair(row, col)
@@ -322,7 +345,7 @@ fun GameScreen(
                     selectedCell = selectedCell,
                     onCircleClick = { circle ->
                         selectedCell?.let { (row, col) ->
-                            if (gameState.winner == GameBot.EMPTY &&
+                            if (gameState.checkWinnerByCircles(circleItems) == GameBot.EMPTY &&
                                 gameState.currentPlayer == 1 &&
                                 gameState.canPlaceCircle(row, col, circle.size, circleItems)
                             ) {
@@ -339,9 +362,9 @@ fun GameScreen(
                                 selectedCell = null
                                 updateGameStatus(gameState, circleItems) { status -> gameStatus = status }
 
-                                if (gameState.winner != GameBot.EMPTY || gameState.isBoardFull()) {
+                                val winnerAfterPlayerMove = gameState.checkWinnerByCircles(circleItems)
+                                if (winnerAfterPlayerMove != GameBot.EMPTY || gameState.isBoardFull()) {
                                     showGameOverDialog = true
-                                    updateRating(sharedPreferences, gameState.winner)
                                 }
                             }
                         }
@@ -533,25 +556,13 @@ private fun updateGameStatus(
             2 -> "Бот победил!"
             else -> "Ничья!"
         }
+
         gameState.isBoardFull() -> "Ничья!"
         gameState.currentPlayer == 1 -> "Ваш ход"
         else -> "Ход бота"
     }
 
     onStatusUpdate(status)
-}
-
-private fun updateRating(
-    sharedPreferences: SharedPreferences,
-    winner: Int
-) {
-    val currentRating = sharedPreferences.getInt("user_rating", 0)
-    val newRating = when (winner) {
-        1 -> currentRating + 30
-        2 -> max(0, currentRating - 25)
-        else -> currentRating
-    }
-    sharedPreferences.edit().putInt("user_rating", newRating).apply()
 }
 
 @Composable

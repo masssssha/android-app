@@ -17,13 +17,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         sharedPreferences = getSharedPreferences("game_prefs", MODE_PRIVATE)
+
         setContent {
             AppTheme {
                 MainScreen(
@@ -32,21 +35,28 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     override fun onResume() {
         super.onResume()
+        loadContent()
+    }
+
+    private fun loadContent() {
+        setContent {
+            AppTheme {
+                MainScreen(
+                    sharedPreferences = sharedPreferences
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun MainScreen(sharedPreferences: SharedPreferences) {
     val context = LocalContext.current
-    var rating by remember {
-        mutableIntStateOf(sharedPreferences.getInt("user_rating", 0))
-    }
-
-    LaunchedEffect(Unit) {
-        rating = sharedPreferences.getInt("user_rating", 0)
-    }
+    val rating = sharedPreferences.getInt("user_rating", 0)
+    println("📱 MAIN SCREEN RATING: $rating")
 
     Box(
         modifier = Modifier
@@ -80,13 +90,7 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
                     containerColor = Color(0xFF888888)
                 )
             ) {
-                Text(
-                    text = "Как играть",
-                    fontSize = 18.sp,
-                    color = Color(0xFFFFFFF0),
-                    fontWeight = FontWeight.Medium
-                )
-
+                Text("Как играть", fontSize = 18.sp, color = Color(0xFFFFFFF0), fontWeight = FontWeight.Medium)
             }
 
             Spacer(modifier = Modifier.width(50.dp))
@@ -96,58 +100,35 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
                     val intent = Intent(context, GameActivity::class.java)
                     context.startActivity(intent)
                 },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(vertical = 8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF6CACE4)
-                )
+                modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6CACE4))
             ) {
-                Text(
-                    text = "Играть против бота",
-                    fontSize = 18.sp,
-                    color = Color(0xFFFFFFF0),
-                    fontWeight = FontWeight.Medium
-                )
+                Text("Играть против бота", fontSize = 18.sp, color = Color(0xFFFFFFF0), fontWeight = FontWeight.Medium)
             }
 
-            // Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(150.dp))
-            // Блок с рейтингом
+
+            // Блок с рейтингом - rating БУДЕТ ОБНОВЛЯТЬСЯ при каждом возврате в MainActivity
             Card(
                 modifier = Modifier.fillMaxWidth(0.7f).padding(horizontal = 16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Text("Текущий рейтинг", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        text = "Текущий рейтинг",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-
-                    Text(
-                        text = rating.toString(),
+                        text = rating.toString(), // ← вот тут будет актуальный рейтинг
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF6CACE4)
                     )
-
-                    Text(
-                        text = "очков",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("очков", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
-            // Подсказка внизу экрана
             Text(
                 text = "Победа: +30 очков • Поражение: -25 очков",
                 fontSize = 12.sp,
@@ -157,7 +138,6 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
         }
     }
 }
-
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
     val darkColorScheme = darkColorScheme(
