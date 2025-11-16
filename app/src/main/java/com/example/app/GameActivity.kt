@@ -128,7 +128,7 @@ fun GameScreen(
                         showFirstMoveDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF6CACE4)
+                        containerColor = Color(0xFF5be06a)
                     )
                 ) {
                     Text("Я первый", color = Color(0xFFFFFFF0))
@@ -142,7 +142,7 @@ fun GameScreen(
                         showFirstMoveDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF6CACE4)
+                        containerColor = Color(0xFFe4575e)
                     )
                 ) {
                     Text("Бот первый", color = Color(0xFFFFFFF0))

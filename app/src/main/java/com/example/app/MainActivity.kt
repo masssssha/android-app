@@ -11,13 +11,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.unit.times
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 
 class MainActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -58,27 +60,27 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
     val rating = sharedPreferences.getInt("user_rating", 0)
     println("📱 MAIN SCREEN RATING: $rating")
 
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121212))
+            .background(MaterialTheme.colorScheme.background)
     ) {
+        Image(
+            painter = painterResource(R.drawable.rectangle_11),
+            contentDescription = "Логотип",
+            modifier = Modifier.fillMaxWidth().height(0.3f * screenHeight).width(0.3f * screenWidth).offset(y = 0.1 * screenHeight)
+        )
+
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Spacer(modifier = Modifier.height(200.dp))
-            Text(
-                text = "Крестики-Нолики",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFFFFFFF0),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 60.dp)
-            )
-
-            Spacer(modifier = Modifier.width(50.dp))
+            Spacer(modifier = Modifier.height(0.35f * screenHeight))
 
             Button(
                 onClick = {
@@ -87,13 +89,13 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
                 },
                 modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF888888)
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
             ) {
-                Text("Как играть", fontSize = 18.sp, color = Color(0xFFFFFFF0), fontWeight = FontWeight.Medium)
+                Text("Как играть?", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
             }
 
-            Spacer(modifier = Modifier.width(50.dp))
+            Spacer(modifier = Modifier.width(0.05f * screenHeight))
 
             Button(
                 onClick = {
@@ -101,14 +103,13 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
                     context.startActivity(intent)
                 },
                 modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6CACE4))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Играть против бота", fontSize = 18.sp, color = Color(0xFFFFFFF0), fontWeight = FontWeight.Medium)
+                Text("Играть против бота", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
             }
 
-            Spacer(modifier = Modifier.height(150.dp))
+            Spacer(modifier = Modifier.height(0.05 * screenHeight))
 
-            // Блок с рейтингом - rating БУДЕТ ОБНОВЛЯТЬСЯ при каждом возврате в MainActivity
             Card(
                 modifier = Modifier.fillMaxWidth(0.7f).padding(horizontal = 16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -123,7 +124,8 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
                         text = rating.toString(), // ← вот тут будет актуальный рейтинг
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6CACE4)
+                        color = if (rating < 0) MaterialTheme.colorScheme.secondary
+                        else MaterialTheme.colorScheme.primary
                     )
                     Text("очков", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -141,15 +143,11 @@ fun MainScreen(sharedPreferences: SharedPreferences) {
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
     val darkColorScheme = darkColorScheme(
-        primary = Color(0xFFBB86FC),
-        secondary = Color(0xFF03DAC6),
-        tertiary = Color(0xFFCF6679),
-        background = Color.Black,
-        surface = Color(0xFF121212),
-        onPrimary = Color.Black,
-        onSecondary = Color.Black,
-        onBackground = Color.Black,
-        onSurface = Color.White
+        background = Color(0xFF181A1E),
+        surfaceContainer = Color(0xFF888888),
+        onSurface = Color(0xFFFFFFF0),
+        primary = Color(0xFF6CACE4),
+        secondary = Color(0xFFe4575e)
     )
     MaterialTheme(
         colorScheme = darkColorScheme,
