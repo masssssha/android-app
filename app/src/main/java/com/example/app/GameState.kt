@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 
-// Класс GameState должен быть в том же пакете
 data class GameState(
     val board: Array<IntArray> = Array(3) { IntArray(3) { GameBot.EMPTY } },
     val currentPlayer: Int = 1, // 1 - пользователь, 2 - бот
@@ -37,10 +36,6 @@ data class GameState(
         return this.copy(circlePositions = newPositions)
     }
 
-    fun isCellOccupied(row: Int, col: Int): Boolean {
-        return circlePositions.containsKey(Pair(row, col)) || board[row][col] != GameBot.EMPTY
-    }
-
     fun isBoardFull(): Boolean {
         return board.all { row -> row.all { it != GameBot.EMPTY } }
     }
@@ -63,7 +58,6 @@ data class GameState(
         return false
     }
 
-    // В классе GameState добавь:
     fun checkWinnerByCircles(circleItems: List<CircleItem>): Int {
         // Проверяем строки
         for (i in 0..2) {
@@ -130,11 +124,9 @@ data class GameState(
         val newCirclePositions = circlePositions.toMutableMap()
         newCirclePositions[Pair(row, col)] = newCircleId
 
-        // Определяем игрока по кружку
         val newCircle = circleItems.find { it.id == newCircleId }
         val player = if (newCircle?.isBot == true) 2 else 1
 
-        // Обновляем board чтобы отразить текущего игрока в клетке
         val newBoard = board.map { it.clone() }.toTypedArray()
         newBoard[row][col] = player
 
@@ -168,7 +160,6 @@ data class GameState(
     }
 }
 
-// Класс CircleItem тоже должен быть в том же пакете
 data class CircleItem(
     val id: Int,
     val size: Dp,
@@ -182,7 +173,7 @@ data class CircleItem(
 @Composable
 fun rememberCircleItems(): List<CircleItem> {
     return remember {
-        val sizes = listOf(60.dp, 50.dp, 40.dp, 30.dp, 20.dp) // Добавил разные размеры
+        val sizes = listOf(60.dp, 50.dp, 40.dp, 30.dp, 20.dp)
 
         // Зеленые кружки для игрока (5 штук)
         val playerCircles = sizes.mapIndexed { index, size ->

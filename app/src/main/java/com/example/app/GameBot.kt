@@ -85,17 +85,10 @@ class GameBot {
         return Pair(-1, -1) // Нет ходов
     }
 
-    // Вспомогательная функция для копирования доски
     private fun copyBoard(board: Array<IntArray>): Array<IntArray> {
         return board.map { it.clone() }.toTypedArray()
     }
 
-    // Проверка на ничью (можно использовать из GameState)
-    fun isBoardFull(board: Array<IntArray>): Boolean {
-        return board.all { row -> row.all { it != EMPTY } }
-    }
-
-    // В классе GameBot добавь метод:
     fun findSuitableBotCircle(
         board: Array<IntArray>,
         row: Int,

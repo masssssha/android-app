@@ -38,6 +38,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import android.content.Intent
+import androidx.compose.ui.unit.times
 
 class GameActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -126,12 +127,24 @@ fun GameScreen(
                         gameState = gameState.copy(currentPlayer = 1)
                         gameStatus = "Ваш ход"
                         showFirstMoveDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5be06a)
-                    )
+                    }
                 ) {
-                    Text("Я первый", color = Color(0xFFFFFFF0))
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x005be06a)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_human),
+                            contentDescription = "Игрок",
+                            modifier = Modifier.size(60.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(text = "Я")
+                    }
                 }
             },
             dismissButton = {
@@ -140,12 +153,24 @@ fun GameScreen(
                         gameState = gameState.copy(currentPlayer = 2)
                         gameStatus = "Ход бота"
                         showFirstMoveDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFe4575e)
-                    )
+                    }
                 ) {
-                    Text("Бот первый", color = Color(0xFFFFFFF0))
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x00e4575e)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_bot),
+                            contentDescription = "Бот",
+                            modifier = Modifier.size(60.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(text = "Бот")
+                    }
                 }
             }
         )
@@ -547,7 +572,6 @@ private fun updateGameStatus(
     circleItems: List<CircleItem>,
     onStatusUpdate: (String) -> Unit
 ) {
-    // Используем новую проверку по кружкам вместо старой по board
     val winner = gameState.checkWinnerByCircles(circleItems)
 
     val status = when {
