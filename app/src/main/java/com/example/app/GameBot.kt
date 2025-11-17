@@ -5,84 +5,124 @@ class GameBot {
     }
 
     // Проверка победителя
+    private var difficulty: Difficulty = Difficulty.MEDIUM
+
+    fun setDifficulty(difficulty: Difficulty) {
+        this.difficulty = difficulty
+    }
+
+    fun makeMove(board: Array<IntArray>, player: Int): Pair<Int, Int> {
+        return when (difficulty) {
+            Difficulty.EASY -> makeEasyMove(board, player)
+            Difficulty.MEDIUM -> makeMediumMove(board, player)
+            Difficulty.HARD -> makeHardMove(board, player)
+        }
+    }
+
+    private fun makeEasyMove(board: Array<IntArray>, player: Int): Pair<Int, Int> {
+        // Простые случайные ходы
+        val availableMoves = mutableListOf<Pair<Int, Int>>()
+        for (i in 0..2) {
+            for (j in 0..2) {
+                if (board[i][j] == EMPTY) {
+                    availableMoves.add(Pair(i, j))
+                }
+            }
+        }
+        return if (availableMoves.isNotEmpty()) {
+            availableMoves.random()
+        } else {
+            Pair(-1, -1)
+        }
+    }
+
+    private fun makeMediumMove(board: Array<IntArray>, player: Int): Pair<Int, Int> {
+        // Сначала проверяем можем ли выиграть
+        for (i in 0..2) {
+            for (j in 0..2) {
+                if (board[i][j] == EMPTY) {
+                    val testBoard = board.map { it.clone() }.toTypedArray()
+                    testBoard[i][j] = player
+                    if (checkWinner(testBoard) == player) {
+                        return Pair(i, j)
+                    }
+                }
+            }
+        }
+
+        // Затем блокируем ход противника
+        val opponent = if (player == 1) 2 else 1
+        for (i in 0..2) {
+            for (j in 0..2) {
+                if (board[i][j] == EMPTY) {
+                    val testBoard = board.map { it.clone() }.toTypedArray()
+                    testBoard[i][j] = opponent
+                    if (checkWinner(testBoard) == opponent) {
+                        return Pair(i, j)
+                    }
+                }
+            }
+        }
+
+        // Иначе случайный ход
+        return makeEasyMove(board, player)
+    }
+
+    private fun makeHardMove(board: Array<IntArray>, player: Int): Pair<Int, Int> {
+        // Сначала пытаемся выиграть
+        val winMove = findWinningMove(board, player)
+        if (winMove.first != -1) return winMove
+
+        // Затем блокируем противника
+        val opponent = if (player == 1) 2 else 1
+        val blockMove = findWinningMove(board, opponent)
+        if (blockMove.first != -1) return blockMove
+
+        // Пытаемся занять центр
+        if (board[1][1] == EMPTY) return Pair(1, 1)
+
+        // Пытаемся занять углы
+        val corners = listOf(Pair(0,0), Pair(0,2), Pair(2,0), Pair(2,2))
+        val availableCorners = corners.filter { board[it.first][it.second] == EMPTY }
+        if (availableCorners.isNotEmpty()) return availableCorners.random()
+
+        // Иначе случайный ход
+        return makeEasyMove(board, player)
+    }
+
+    private fun findWinningMove(board: Array<IntArray>, player: Int): Pair<Int, Int> {
+        for (i in 0..2) {
+            for (j in 0..2) {
+                if (board[i][j] == EMPTY) {
+                    val testBoard = board.map { it.clone() }.toTypedArray()
+                    testBoard[i][j] = player
+                    if (checkWinner(testBoard) == player) {
+                        return Pair(i, j)
+                    }
+                }
+            }
+        }
+        return Pair(-1, -1)
+    }
+
     fun checkWinner(board: Array<IntArray>): Int {
-        // Проверяем строки
+        // Проверка строк и столбцов
         for (i in 0..2) {
             if (board[i][0] != EMPTY && board[i][0] == board[i][1] && board[i][1] == board[i][2]) {
                 return board[i][0]
             }
-        }
-
-        // Проверяем столбцы
-        for (j in 0..2) {
-            if (board[0][j] != EMPTY && board[0][j] == board[1][j] && board[1][j] == board[2][j]) {
-                return board[0][j]
+            if (board[0][i] != EMPTY && board[0][i] == board[1][i] && board[1][i] == board[2][i]) {
+                return board[0][i]
             }
         }
-
-        // Проверяем диагонали
+        // Проверка диагоналей
         if (board[0][0] != EMPTY && board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
             return board[0][0]
         }
         if (board[0][2] != EMPTY && board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
             return board[0][2]
         }
-
         return EMPTY
-    }
-
-    // Ход бота
-    fun makeMove(board: Array<IntArray>, botSymbol: Int): Pair<Int, Int> {
-        // 1. Попробовать выиграть
-        for (i in 0..2) {
-            for (j in 0..2) {
-                if (board[i][j] == EMPTY) {
-                    val testBoard = copyBoard(board)
-                    testBoard[i][j] = botSymbol
-                    if (checkWinner(testBoard) == botSymbol) {
-                        return Pair(i, j)
-                    }
-                }
-            }
-        }
-
-        // 2. Попробовать заблокировать игрока
-        val playerSymbol = if (botSymbol == 1) 2 else 1
-        for (i in 0..2) {
-            for (j in 0..2) {
-                if (board[i][j] == EMPTY) {
-                    val testBoard = copyBoard(board)
-                    testBoard[i][j] = playerSymbol
-                    if (checkWinner(testBoard) == playerSymbol) {
-                        return Pair(i, j)
-                    }
-                }
-            }
-        }
-
-        // 3. Занять центр если свободен
-        if (board[1][1] == EMPTY) {
-            return Pair(1, 1)
-        }
-
-        // 4. Занять углы
-        val corners = listOf(Pair(0, 0), Pair(0, 2), Pair(2, 0), Pair(2, 2))
-        for (corner in corners.shuffled()) {
-            if (board[corner.first][corner.second] == EMPTY) {
-                return corner
-            }
-        }
-
-        // 5. Любая свободная клетка
-        for (i in 0..2) {
-            for (j in 0..2) {
-                if (board[i][j] == EMPTY) {
-                    return Pair(i, j)
-                }
-            }
-        }
-
-        return Pair(-1, -1) // Нет ходов
     }
 
     private fun copyBoard(board: Array<IntArray>): Array<IntArray> {

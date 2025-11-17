@@ -38,6 +38,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import android.content.Intent
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.times
 
 class GameActivity : ComponentActivity() {
@@ -64,31 +65,75 @@ class GameActivity : ComponentActivity() {
     }
 }
 
+enum class Difficulty {
+    EASY, MEDIUM, HARD
+}
+
+object RatingDiff {
+    const val WinEasy = 10
+    const val WinMedium = 20
+    const val WinHard = 30
+
+    const val LoseEasy = 25
+    const val LoseMedium = 20
+    const val LoseHard = 15
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameScreen(
     sharedPreferences: SharedPreferences,
     onBackClick: () -> Unit
 ) {
+    var selectedDifficulty by remember { mutableStateOf<Difficulty?>(null) }
+    var selectedFirstPlayer by remember { mutableStateOf<Int?>(null) }
     val gameBot = remember { GameBot() }
     var gameState by remember { mutableStateOf(GameState()) }
-    var gameStatus by remember { mutableStateOf("Ваш ход") }
+    var gameStatus by remember { mutableStateOf("Настройка игры") }
     var selectedCell by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     val circleItems = rememberCircleItems()
     var availableCircles by remember { mutableStateOf(circleItems.filter { !it.isBot }) }
     var showExitDialog by remember { mutableStateOf(false) }
-    var showFirstMoveDialog by remember { mutableStateOf(true) }
+    var showGameSetupDialog by remember { mutableStateOf(true) }
     var showGameOverDialog by remember { mutableStateOf(false) }
-    var gameResult by remember { mutableStateOf("") } // "win", "lose", "draw"
+    var gameResult by remember { mutableStateOf("") }
     var userRating by remember {
         mutableStateOf(sharedPreferences.getInt("user_rating", 0))
+    }
+    var shouldBotMakeFirstMove by remember { mutableStateOf(false) }
+
+    LaunchedEffect(selectedDifficulty) {
+        selectedDifficulty?.let { difficulty ->
+            gameBot.setDifficulty(difficulty)
+        }
+    }
+
+    fun startGame() {
+        if (selectedDifficulty != null && selectedFirstPlayer != null) {
+            gameState = gameState.copy(currentPlayer = selectedFirstPlayer!!)
+            gameStatus = if (selectedFirstPlayer == 1) "Ваш ход" else "Ход бота"
+            showGameSetupDialog = false
+            if (selectedFirstPlayer == 2) {
+                shouldBotMakeFirstMove = true
+            }
+        }
     }
 
     fun updateRating(winner: Int) {
         val currentRating = sharedPreferences.getInt("user_rating", 0)
         val newRating = when (winner) {
-            1 -> currentRating + 30
-            2 -> currentRating - 25
+            1 -> currentRating + when (selectedDifficulty) {
+                Difficulty.EASY -> RatingDiff.WinEasy
+                Difficulty.MEDIUM -> RatingDiff.WinMedium
+                Difficulty.HARD -> RatingDiff.WinHard
+                null -> 15
+            }
+            2 -> currentRating - when (selectedDifficulty) {
+                Difficulty.EASY -> RatingDiff.LoseEasy
+                Difficulty.MEDIUM -> RatingDiff.LoseMedium
+                Difficulty.HARD -> RatingDiff.LoseHard
+                null -> 20
+            }
             else -> currentRating
         }
         println("🔄 UPDATE RATING: current=$currentRating, winner=$winner, new=$newRating")
@@ -115,73 +160,126 @@ fun GameScreen(
         }
     }
 
-
-    if (showFirstMoveDialog) {
+    if (showGameSetupDialog) {
         AlertDialog(
-            onDismissRequest = { /* Нельзя закрыть, нужно выбрать */ },
-            title = { Text("Кто ходит первым?", color = Color(0xFFFFFFF0)) },
-            text = { Text("Выберите, кто будет делать первый ход", color = Color(0xFFFFFFF0)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        gameState = gameState.copy(currentPlayer = 1)
-                        gameStatus = "Ваш ход"
-                        showFirstMoveDialog = false
+            onDismissRequest = { },
+            title = { Text("Новая игра", color = Color(0xFFFFFFF0), fontSize = 20.sp, textAlign = TextAlign.Center) },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Выберите сложность бота:", color = Color(0xFFFFFFF0), fontSize = 20.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Button(
+                            onClick = { selectedDifficulty = Difficulty.EASY },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (selectedDifficulty == Difficulty.EASY) Color(0xFF6CACE4) else Color(0xFF888888)
+                            ),
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        ) {
+                            Text("лёгкий", color = Color(0xFFFFFFF0), fontSize = 20.sp)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { selectedDifficulty = Difficulty.MEDIUM },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (selectedDifficulty == Difficulty.MEDIUM) Color(0xFF6CACE4) else Color(0xFF888888)
+                            ),
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        ) {
+                            Text("средний", color = Color(0xFFFFFFF0), fontSize = 20.sp)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { selectedDifficulty = Difficulty.HARD },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (selectedDifficulty == Difficulty.HARD) Color(0xFF6CACE4) else Color(0xFF888888)
+                            ),
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        ) {
+                            Text("тяжёлый", color = Color(0xFFFFFFF0), fontSize = 20.sp)
+                        }
                     }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .background(Color(0x005be06a)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_human),
-                            contentDescription = "Игрок",
-                            modifier = Modifier.size(60.dp)
-                        )
 
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(text = "Я")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Кто ходит первым:", color = Color(0xFFFFFFF0), fontSize = 20.sp)
+                    // Spacer(modifier = Modifier.height(8.dp))
+                    Row {
+                        TextButton(
+                            onClick = {
+                                gameState = gameState.copy(currentPlayer = 2)
+                                gameStatus = "Ход бота"
+                                selectedFirstPlayer = 2
+                            }
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.size(100.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_bot),
+                                    contentDescription = "Бот",
+                                    modifier = Modifier.size(70.dp)
+                                )
+                                Spacer(modifier = Modifier.height(5.dp))
+                                Text(text = "Бот", color = Color(0xFFFFFFF0))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        TextButton(
+                            onClick = {
+                                gameState = gameState.copy(currentPlayer = 1)
+                                gameStatus = "Ваш ход"
+                                selectedFirstPlayer = 1
+                            }
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.size(100.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_human),
+                                    contentDescription = "Игрок",
+                                    modifier = Modifier.size(70.dp)
+                                )
+                                Spacer(modifier = Modifier.height(5.dp))
+                                Text(text = "Я", color = Color(0xFFFFFFF0))
+                            }
+                        }
                     }
                 }
             },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        gameState = gameState.copy(currentPlayer = 2)
-                        gameStatus = "Ход бота"
-                        showFirstMoveDialog = false
-                    }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .background(Color(0x00e4575e)),
-                        contentAlignment = Alignment.Center
+            confirmButton = {
+                Column {
+                    Button(
+                        onClick = { startGame() },
+                        enabled = selectedDifficulty != null && selectedFirstPlayer != null,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (selectedDifficulty != null && selectedFirstPlayer != null) Color(0xFF6CACE4) else Color(0xFF888888)
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.9f)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_bot),
-                            contentDescription = "Бот",
-                            modifier = Modifier.size(60.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(text = "Бот")
+                        Text("Начать игру", color = Color(0xFFFFFFF0), fontSize = 20.sp)
                     }
+                    Button(
+                        onClick = { onBackClick() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6CACE4)),
+                        modifier = Modifier.fillMaxWidth(0.9f)
+                    ) {
+                        Text("В главное меню", color = Color(0xFFFFFFF0), fontSize = 20.sp)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         )
     }
 
     // Обработка хода бота
-    LaunchedEffect(key1 = gameState.currentPlayer, key2 = gameState.board) {
-        val shouldBotMove = gameState.checkWinnerByCircles(circleItems) == GameBot.EMPTY &&
+    LaunchedEffect(key1 = gameState.currentPlayer, key2 = gameState.board, key3 = shouldBotMakeFirstMove) {
+        val shouldBotMove = (gameState.checkWinnerByCircles(circleItems) == GameBot.EMPTY &&
                 !gameState.isBoardFull() &&
                 gameState.currentPlayer == 2 &&
-                !showFirstMoveDialog
+                !showGameSetupDialog) || shouldBotMakeFirstMove
 
         val currentWinner = gameState.checkWinnerByCircles(circleItems)
         if (currentWinner != GameBot.EMPTY) {
@@ -189,6 +287,10 @@ fun GameScreen(
         }
 
         if (shouldBotMove) {
+            if (shouldBotMakeFirstMove) {
+                shouldBotMakeFirstMove = false
+            }
+
             delay(2000)
             val (botRow, botCol) = gameBot.makeMove(gameState.board, 2)
             if (botRow != -1 && botCol != -1) {
@@ -282,8 +384,9 @@ fun GameScreen(
                         gameStatus = "Выберите кто ходит первым"
                         selectedCell = null
                         availableCircles = circleItems.filter { !it.isBot }.map { it.copy(isUsed = false) }
-                        showFirstMoveDialog = true
+                        showGameSetupDialog = true
                         showGameOverDialog = false
+                        shouldBotMakeFirstMove = false
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF6CACE4)
